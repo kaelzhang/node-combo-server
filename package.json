@@ -2,7 +2,9 @@
   "name": "static-combo-server",
   "version": "1.0.0",
   "description": "static-combo-server",
-  "main": "index.js",
+  "bin": {
+    "static-combo-server": "bin/start.js"
+  },
   "scripts": {
     "test": "./node_modules/.bin/mocha --reporter spec ./test/*.js"
   },
