@@ -105,3 +105,16 @@ http.createServer(function(req, res){
 ## License
 
 MIT
+
+
+
+```
+// Concat:
+// mod/a.js
+```
+
+1. 代码可以上线
+－ cache
+－ concurrency
+2. pm2，可以部署，nodejs: cluster
+3. 重构
