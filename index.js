@@ -5,13 +5,16 @@ var express = require('express');
 var md5 = require('md5');
 var base64 = require('js-base64').Base64;
 var evts = require('events');
+var util = require('util');
+var http = require('http');
 var ct = require('./lib/concat');
 var queue = require('./lib/queue');
+
+var que = new queue();
 
 handle.prototype = {};
 
 function handle(argument){
-  console.log(argument);
   var req = argument.req;
   var res = argument.res;
   var options = argument.options || {};
@@ -20,6 +23,7 @@ function handle(argument){
   var concat_name = "concat";
   var file_arr = getFiles(url,concat_name);
   var load_files = 0;
+  console.log(cache.keys())
   var concat = {
     "reqUrl" : url,
     "root" : options.root,
@@ -42,7 +46,7 @@ function handle(argument){
     stale: true
   }
 
-  var cache_key = base64.encode(concat.file);
+  var cache_key = md5(concat.file);
 
   if(cache.has(cache_key)){
     console.log("cache");
@@ -51,6 +55,26 @@ function handle(argument){
     setReponse(res,result);
     return;
   }else{
+    util.inherits(queue, evts);
+    console.log(que);
+    var que_key = getFiles(url,concat_name);
+    var ready_que_key = 'ready:' + que_key;
+    http.createServer(function(req, res){
+      que.on(ready_que_key, function(response){
+        response.pipe(res)
+      })
+
+      if(!que.has(que_key)){
+        que.add(que_key);
+        console.log(que.list)
+        getResponse(que_key, function(err, response){
+          console.log(333);
+          que.emit(ready_que_key, response); 
+        })
+      }else{
+        return;
+      }
+    });
     console.log("没有cache");
   }
 
@@ -60,25 +84,10 @@ function handle(argument){
       return;
     }
     if(result.toCache !== undefined && result.toCache === true){
-      cache.set("a",result.content);
-    }else{
-
-      // util.inherits(Queue, evts);
-      // var queue = new Queue();
-
-      // http.createServer(function(req, res){
-      //   queue.on('ready:mod~a.js,mod~b.js', function(response){
-      //     response.pipe(res)
-      //   })
-
-      //   if(!queue.has('mod~a.js,mod~b.js')){
-      //     queue.add('mod~a.js,mod~b.js');
-      //     getResponse('mod~a.js,mod~b.js', function(err, response){
-      //      queue.emit('ready:mod~a.js,mod~b.js', response); 
-      //    })
-      //   }
-      // });
+      console.log("******************")
+      cache.set(cache_key, base64.encode(result.content));
     }
+
     console.log(result);
 
     setReponse(res,result);
@@ -97,7 +106,9 @@ function setReponse(res,result){
   );
   res.send(result.content);
 }
-
+function getQueueName(url,concat_name){
+  return url.replace("/"+ concat_name +"/","");
+}
 function getFiles(url,concat_name){
   url = url.replace("/"+ concat_name +"/","");
   url = url.replace(/\~/g,"/");

@@ -59,12 +59,14 @@ var cache_options = {
   maxAge: 1000 * 60 * 60,
   stale: true
 }
+var my_cache = lrucache(cache_options);
+
  app.use(function(req, res){
   server({
     req: req,
     res : res,
     options: config,
-    cache: lrucache(cache_options)
+    cache: my_cache
   });
 });
 
