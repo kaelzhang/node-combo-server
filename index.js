@@ -59,16 +59,14 @@ function handle(argument){
     console.log(que);
     var que_key = getFiles(url,concat_name);
     var ready_que_key = 'ready:' + que_key;
+
     http.createServer(function(req, res){
       que.on(ready_que_key, function(response){
         response.pipe(res)
       })
-
       if(!que.has(que_key)){
         que.add(que_key);
-        console.log(que.list)
         getResponse(que_key, function(err, response){
-          console.log(333);
           que.emit(ready_que_key, response); 
         })
       }else{

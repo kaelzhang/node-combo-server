@@ -70,4 +70,6 @@ var my_cache = lrucache(cache_options);
   });
 });
 
-app.listen(config.port, function(){console.log(2222)});
+app.listen(config.port, function(){
+  console.log("server start on " + config.port)
+});
