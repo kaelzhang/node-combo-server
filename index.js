@@ -3,16 +3,13 @@
 var request = require('request');
 var express = require('express');
 var md5 = require('md5');
-var base64 = require('js-base64').Base64;
-var evts = require('events');
-var util = require('util');
 var http = require('http');
 var ct = require('./lib/concat');
 var queue = require('./lib/queue');
 
-var que = new queue();
-
 handle.prototype = {};
+
+var que = new queue();
 
 function handle(argument){
   var req = argument.req;
@@ -23,7 +20,6 @@ function handle(argument){
   var concat_name = "concat";
   var file_arr = getFiles(url,concat_name);
   var load_files = 0;
-  console.log(cache.keys())
   var concat = {
     "reqUrl" : url,
     "root" : options.root,
@@ -49,30 +45,23 @@ function handle(argument){
   var cache_key = md5(concat.file);
 
   if(cache.has(cache_key)){
-    console.log("cache");
     var cache_content = cache.get(cache_key);
-    result.content = base64.decode(cache_content);
+    result.content = cache_content
     setReponse(res,result);
     return;
   }else{
-    util.inherits(queue, evts);
-    console.log(que);
     var que_key = getFiles(url,concat_name);
     var ready_que_key = 'ready:' + que_key;
-
-    http.createServer(function(req, res){
-      que.on(ready_que_key, function(response){
-        response.pipe(res)
-      })
-      if(!que.has(que_key)){
-        que.add(que_key);
-        getResponse(que_key, function(err, response){
-          que.emit(ready_que_key, response); 
-        })
-      }else{
-        return;
-      }
-    });
+    que.on(ready_que_key, function(result){
+      //que.delete(ready_que_key);
+      setReponse(res,result);
+    })
+    console.log(que.list);
+    if(!que.has(que_key)){
+      que.add(que_key);
+    }else{
+      return;
+    }
     console.log("没有cache");
   }
 
@@ -83,9 +72,9 @@ function handle(argument){
     }
     if(result.toCache !== undefined && result.toCache === true){
       console.log("******************")
-      cache.set(cache_key, base64.encode(result.content));
+      cache.set(cache_key, result.content);
+      que.emit(ready_que_key,result); 
     }
-
     console.log(result);
 
     setReponse(res,result);

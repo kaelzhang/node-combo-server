@@ -7,7 +7,6 @@ var fs = require('fs');
 var program = require('commander');
 var express = require('express');
 var server = require('../index');
-
 var default_options = {
   "port" : "8888",
   "config" : "../static-combo-server/config.ini",
@@ -59,6 +58,7 @@ var cache_options = {
   maxAge: 1000 * 60 * 60,
   stale: true
 }
+
 var my_cache = lrucache(cache_options);
 
  app.use(function(req, res){
