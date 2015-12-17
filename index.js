@@ -1,6 +1,5 @@
 'use strict'
 
-var request = require('request');
 var express = require('express');
 var md5 = require('md5');
 var http = require('http');
