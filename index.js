@@ -51,10 +51,10 @@ function middleware (options) {
         return res.status(404).end('Failed to read "' + err.pathname + '"')
       }
 
-      var joiner = options.joiner || middleware.join_contents;
+      var joiner = options.joiner || middleware.join_contents
       var content = joiner(contents);
-      var last = contents[contents.length - 1].
-      var content_type = mime.lookup(last.filename);
+      var last = contents[contents.length - 1]
+      var content_type = mime.lookup(last.filename)
 
       res.status(200)
       res.set('Content-Type', content_type)
