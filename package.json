@@ -1,16 +1,16 @@
 {
-  "name": "static-combo-server",
+  "name": "combo-server",
   "version": "1.0.0",
-  "description": "Simple static combo server and middleware.",
+  "description": "Express middleware to combo static assets.",
   "scripts": {
     "test": "./node_modules/.bin/mocha --reporter spec ./test/*.js"
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/kaelzhang/static-combo-server.git"
+    "url": "git://github.com/kaelzhang/combo-server.git"
   },
   "keywords": [
-    "static-combo-server",
+    "combo-server",
     "combo",
     "express",
     "express-middleware",
@@ -22,10 +22,11 @@
   "author": "kaelzhang",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/kaelzhang/static-combo-server/issues"
+    "url": "https://github.com/kaelzhang/combo-server/issues"
   },
   "devDependencies": {
     "chai": "*",
+    "express": "^4.13.3",
     "mocha": "*",
     "run-mocha-cases": "^1.0.9"
   },

@@ -1,120 +1,47 @@
-[![NPM version](https://badge.fury.io/js/static-combo-server.svg)](http://badge.fury.io/js/static-combo-server)
-[![npm module downloads per month](http://img.shields.io/npm/dm/static-combo-server.svg)](https://www.npmjs.org/package/static-combo-server)
-[![Build Status](https://travis-ci.org/kaelzhang/static-combo-server.svg?branch=master)](https://travis-ci.org/kaelzhang/static-combo-server)
-[![Dependency Status](https://gemnasium.com/kaelzhang/static-combo-server.svg)](https://gemnasium.com/kaelzhang/static-combo-server)
+[![Build Status](https://travis-ci.org/kaelzhang/combo-server.svg?branch=master)](https://travis-ci.org/kaelzhang/combo-server)
 
-# static-combo-server
 
-<!-- description -->
+# combo-server
+
+Express and connect middleware to combo static assets.
 
 ## Install
 
 ```sh
-$ npm install -g static-combo-server
+$ npm install combo-server --save
 ```
 
 ## Usage
 
+```js
+var config = {
+  routers: [
+    {
+      location: '/mod',
+      root: '/data/static'
+    }
+  ],
+  
+  // Optional
+  // If the pathname of the url doesn't start with '/combo/',
+  // it will skip and go to the next middleware
+  base: '/combo'
+}
+
+var app = require('express')()
+var middleware = require('combo-server')(config)
+app.use(middleware)
+app.listen(8888)
+```
+
+By default, when visiting:
+
 ```sh
-$ static-combo-server [--config ./config.ini]
+http://localhost:8888/combo/mod/a.js,mod/b.js
 ```
 
-- `--config <path>` define the configuration file which supports ini. Default to `~/.static-combo-server/config.ini`. If `~/.static-combo-server/config.ini` not exists, then create one with the default configurations.
+It will returns the comboed content of `'/data/static/a.js'` and `'/data/static/b.js'`.
 
-- `--port <port>` define the port to listen, default to `8888`
-
-## default `config.ini`
-
-```
-port = 8888 # --port > port in ini
-root = ~/.static-combo-server/static/
-```
-
-## Logic
-
-```
-http://localhost:8888/concat/mod~a.js,mod~b.js
-
-->
-
-readFile: <root>/mod/a.js, <root>/mod/b.js
-concat: join with `\n\n` 
-```
-
-if any file is not found, returns 404
-
-#### header(express)
-
-#### headers -> http protocal(apache)
-
-- `Content-Type`: depends on the extension of the last file.
-	- `.js`: 'application/x-javascript'
-	- `.css`: 'text/css'
-- `Content-Length`: file length
-
-#### Cache
-
-Save to 
-- hardware: `<root>/concat/mod~a.js,mod~b.js`
-- lrucache: `{'mod~a.js,mod~b.js': {time: '', content: ''}}`
-
-lrucache > hardware > readFile
-
-
-#### concurrency
-
-`mod~a.js,mod~b.js`
-
-```
-var EE = require('events');
-
-function Queue(){}
-util.inherits(Queue, EE);
-
-var queue = new Queue()
-
-
-http.createServer(function(req, res){
-	queue.on('ready:mod~a.js,mod~b.js', function(response){
-	    response.pipe(res)
-	})
-	
-	if(!queue.has('mod~a.js,mod~b.js')){
-		queue.add('mod~a.js,mod~b.js');
-		getResponse('mod~a.js,mod~b.js', function(err, response){
-		   queue.emit('ready:mod~a.js,mod~b.js', response); 
-		})
-	}
-});
-```
-
-
-### dependencies
-
-- ini(npm)
-- async(npm)
-- http(node)
-- express(npm)
-- commander(npm)
-- home(npm)
-- fse(npm), async, no sync
-- fs(node)
-- lru-cache(npm)
-- request(npm)
-
-## License
-
-MIT
-
-
-
-```
-// Concat:
-// mod/a.js
-```
-
-1. 代码可以上线
-－ cache
-－ concurrency
-2. pm2，可以部署，nodejs: cluster
-3. 重构
+- config `Object`
+  - url_parser `function(url, config)`
+  - joiner `function(contents)`

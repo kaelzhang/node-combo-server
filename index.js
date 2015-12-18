@@ -1,6 +1,6 @@
 'use strict'
 
-module.exports = middleware
+module.exports = combo
 
 var concat = require('./lib/concat')
 var AsyncCache = require('async-cache')
@@ -22,16 +22,16 @@ var node_url = require('url')
 // - base: {String}
 // - joiner: {function()} method to join file contents
 // - routers: {Array.<router>}
-function middleware (options) {
+function combo (options) {
   var ac = new AsyncCache({
     max: 1000,
     maxAge: 1000 * 60 * 60 * 12,
     load: function (url, callback) {
-      var parser = options.path_parser || middleware.parse_path
-      var parsed = parser(url)
+      var parser = options.path_parser || combo.parse_path
+      var paths = parser(url)
 
-      async.map(parsed.paths, function (path, done) {
-        middleware.get_content(path, options, done)
+      async.map(paths, function (path, done) {
+        combo.get_content(path, options, done)
 
       }, function (err, contents) {
         if (err) {
@@ -43,15 +43,19 @@ function middleware (options) {
     }
   })
 
-  function handler (req, res, next) {
+  function middleware (req, res, next) {
     var url = req.url
+
+    if (!~url.indexOf(options.base)) {
+      return next()
+    }
 
     ac.get(url, function (err, contents) {
       if (err) {
         return res.status(404).end('Failed to read "' + err.pathname + '"')
       }
 
-      var joiner = options.joiner || middleware.join_contents
+      var joiner = options.joiner || combo.join_contents
       var content = joiner(contents);
       var last = contents[contents.length - 1]
       var content_type = mime.lookup(last.filename)
@@ -64,11 +68,11 @@ function middleware (options) {
     })
   }
 
-  return handler;
+  return middleware
 }
 
 
-middleware.get_content = function (pathname, options, callback) {
+combo.get_content = function (pathname, options, callback) {
   router.route(path, {
     routers: options.routers
   }, function (filename, fallback_url) {
@@ -104,7 +108,7 @@ middleware.get_content = function (pathname, options, callback) {
 //   paths: ['/mod/a.js', '/mod/b.js'],
 //   version: ''
 // }
-middleware.parse_path = function (url, options) {
+combo.parse_path = function (url, options) {
   var parsed = node_url.parse(url, true)
   var version = parsed.query.v || ''
   var pathname = parsed.pathname
@@ -117,17 +121,14 @@ middleware.parse_path = function (url, options) {
   var paths = pathname
     .split(',')
     .map(function (path) {
-      return middleware.make_sure_leading_slash(path)
+      return combo.make_sure_leading_slash(path)
     })
 
-  return {
-    paths: unique(paths),
-    version: version
-  }
+  return unique(paths)
 }
 
 
-middleware.join_contents = function (contents) {
+combo.join_contents = function (contents) {
   return contents.map(function (content) {
     var pathname = content.pathname;
     return '// ' + pathname + '\n' + content.content;
@@ -136,6 +137,6 @@ middleware.join_contents = function (contents) {
 }
 
 
-middleware.make_sure_leading_slash = function (path) {
+combo.make_sure_leading_slash = function (path) {
   return path.replace(/^\/*/, '/')
 }
