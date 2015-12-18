@@ -42,6 +42,6 @@ http://localhost:8888/combo/mod/a.js,mod/b.js
 
 It will returns the comboed content of `'/data/static/a.js'` and `'/data/static/b.js'`.
 
-- config `Object`
+- **config** `Object`
   - url_parser `function(url, config)`
   - joiner `function(contents)`
