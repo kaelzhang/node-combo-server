@@ -2,14 +2,12 @@
 
 module.exports = combo
 
-var concat = require('./lib/concat')
 var AsyncCache = require('async-cache')
 var router = require('neuron-router')
 var async = require('async')
 var fs = require('graceful-fs')
 var unique = require('array-unique')
 var mime = require('mime');
-
 
 var node_url = require('url')
 
@@ -28,7 +26,7 @@ function combo (options) {
     maxAge: 1000 * 60 * 60 * 12,
     load: function (url, callback) {
       var parser = options.path_parser || combo.parse_path
-      var paths = parser(url)
+      var paths = parser(url, options)
 
       async.map(paths, function (path, done) {
         combo.get_content(path, options, done)
@@ -56,7 +54,7 @@ function combo (options) {
       }
 
       var joiner = options.joiner || combo.join_contents
-      var content = joiner(contents);
+      var content = joiner(contents, options);
       var last = contents[contents.length - 1]
       var content_type = mime.lookup(last.filename)
 
@@ -73,7 +71,7 @@ function combo (options) {
 
 
 combo.get_content = function (pathname, options, callback) {
-  router.route(path, {
+  router.route(pathname, {
     routers: options.routers
   }, function (filename, fallback_url) {
     if (!filename) {
