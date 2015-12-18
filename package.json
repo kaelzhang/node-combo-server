@@ -2,9 +2,6 @@
   "name": "static-combo-server",
   "version": "1.0.0",
   "description": "Simple static combo server and middleware.",
-  "bin": {
-    "static-combo-server": "bin/start.js"
-  },
   "scripts": {
     "test": "./node_modules/.bin/mocha --reporter spec ./test/*.js"
   },
@@ -28,17 +25,16 @@
     "url": "https://github.com/kaelzhang/static-combo-server/issues"
   },
   "devDependencies": {
+    "chai": "*",
     "mocha": "*",
-    "chai": "*"
+    "run-mocha-cases": "^1.0.9"
   },
   "dependencies": {
     "array-unique": "^0.2.1",
-    "express": "^4.13.3",
-    "fs-extra": "^0.24.0",
+    "async": "^1.5.0",
+    "async-cache": "^1.0.0",
     "graceful-fs": "^4.1.2",
-    "home": "^0.1.8",
-    "ini": "^1.3.4",
-    "minimist": "^1.2.0",
-    "wrap-as-async": "^1.2.2"
+    "mime": "^1.3.4",
+    "neuron-router": "^1.2.0"
   }
 }
