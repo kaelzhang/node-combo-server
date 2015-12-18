@@ -13,10 +13,7 @@ var node_url = require('url')
 
 
 // @param {Object} options
-// - parser: {function(url)} should returns {
-//     paths: {Array.<path>}
-//     version: {String=} optional
-//   }
+// - parser: {function(url)} should returns `paths` {Array.<path>}
 // - base: {String}
 // - joiner: {function()} method to join file contents
 // - routers: {Array.<router>}
@@ -50,11 +47,14 @@ function combo (options) {
 
     ac.get(url, function (err, contents) {
       if (err) {
-        return res.status(404).end('Failed to read "' + err.pathname + '"')
+        return res
+          .status(404)
+          .end('Failed to read "' 
+            + combo.remove_leading_slash(err.pathname) + '"')
       }
 
       var joiner = options.joiner || combo.join_contents
-      var content = joiner(contents, options);
+      var content = joiner(contents, options)
       var last = contents[contents.length - 1]
       var content_type = mime.lookup(last.filename)
 
@@ -77,7 +77,7 @@ combo.get_content = function (pathname, options, callback) {
     if (!filename) {
       return callback({
         code: 'ROUTE_NOT_FOUND',
-        path: pathname
+        pathname: pathname
       })
     }
 
@@ -85,8 +85,8 @@ combo.get_content = function (pathname, options, callback) {
       if (err) {
         return callback({
           code: 'ERR_READ_FILE',
-          file: filename,
-          path: pathname,
+          filename: filename,
+          pathname: pathname,
           err: err
         })
       }
@@ -128,13 +128,20 @@ combo.parse_path = function (url, options) {
 
 combo.join_contents = function (contents) {
   return contents.map(function (content) {
-    var pathname = content.pathname;
-    return '// ' + pathname + '\n' + content.content;
+    var pathname = content.pathname
+    return '// ' + combo.remove_leading_slash(pathname) + '\n' 
+      + content.content
 
-  }).join('\n\n');
+  }).join('\n\n')
 }
 
 
 combo.make_sure_leading_slash = function (path) {
   return path.replace(/^\/*/, '/')
 }
+
+
+combo.remove_leading_slash = function (path) {
+  return path.replace(/^\/+/, '')
+}
+
