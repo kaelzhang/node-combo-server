@@ -7,7 +7,8 @@ var router = require('neuron-router')
 var async = require('async')
 var fs = require('graceful-fs')
 var unique = require('array-unique')
-var mime = require('mime');
+var mime = require('mime')
+var request = require('request')
 
 var node_url = require('url')
 
@@ -33,7 +34,11 @@ function combo (options) {
           return callback(err)
         }
 
-        callback(null, contents)
+        callback(null, {
+          contents: contents,
+          fresh: true,
+          timestamp: + new Date
+        })
       });
     }
   })
@@ -45,7 +50,7 @@ function combo (options) {
       return next()
     }
 
-    ac.get(url, function (err, contents) {
+    ac.get(url, function (err, data) {
       if (err) {
         return res
           .status(404)
@@ -53,10 +58,11 @@ function combo (options) {
             + combo.remove_leading_slash(err.pathname) + '"')
       }
 
+      var contents = data.contents
       var joiner = options.joiner || combo.join_contents
       var content = joiner(contents, options)
       var last = contents[contents.length - 1]
-      var content_type = mime.lookup(last.filename)
+      var content_type = mime.lookup(last.pathname)
 
       res.status(200)
       res.set('Content-Type', content_type)
@@ -74,28 +80,35 @@ combo.get_content = function (pathname, options, callback) {
   router.route(pathname, {
     routers: options.routers
   }, function (filename, fallback_url) {
-    if (!filename) {
+    if (filename) {
+      return combo._get_file_content(filename, pathname, callback)
+    }
+
+    if (fallback_url) {
+      return combo._get_remote_content(url, pathname, callback)
+    }
+
+    callback({
+      code: 'ROUTE_NOT_FOUND',
+      pathname: pathname
+    })
+  })
+}
+
+
+combo._get_file_content = function (filename, pathname, callback) {
+  fs.readFile(filename, function (err, content) {
+    if (err) {
       return callback({
-        code: 'ROUTE_NOT_FOUND',
-        pathname: pathname
+        code: 'ERR_READ_FILE',
+        pathname: pathname,
+        err: err
       })
     }
 
-    fs.readFile(filename, function (err, content) {
-      if (err) {
-        return callback({
-          code: 'ERR_READ_FILE',
-          filename: filename,
-          pathname: pathname,
-          err: err
-        })
-      }
-
-      callback(null, {
-        pathname: pathname,
-        filename: filename,
-        content: content.toString()
-      })
+    callback(null, {
+      pathname: pathname,
+      content: content.toString()
     })
   })
 }
