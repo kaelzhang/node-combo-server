@@ -18,7 +18,12 @@ var node_url = require('url')
 // - base: {String}
 // - joiner: {function()} method to join file contents
 // - routers: {Array.<router>}
+// - expire: {Number}
+// - last_modified_ahead: {Number} see [rfc7323](https://tools.ietf.org/html/rfc7232#page-7)
+// - 
 function combo (options) {
+  options.last_modified_ahead = options.last_modified_ahead || 60 * 1000
+
   var ac = new AsyncCache({
     max: 1000,
     maxAge: 1000 * 60 * 60 * 12,
@@ -36,8 +41,7 @@ function combo (options) {
 
         callback(null, {
           contents: contents,
-          fresh: true,
-          timestamp: + new Date
+          timestamp: combo._second_time(options.last_modified_ahead)
         })
       });
     }
@@ -50,12 +54,21 @@ function combo (options) {
       return next()
     }
 
+    var cached = ac.has(url)
     ac.get(url, function (err, data) {
       if (err) {
         return res
           .status(404)
           .end('Failed to read "' 
             + combo.remove_leading_slash(err.pathname) + '"')
+      }
+
+      // 304
+      if (cached
+        && data.timestamp <= + new Date(req.get('If-Modified-Since')) ) {
+        res.status(304)
+        res.end()
+        return
       }
 
       var contents = data.contents
@@ -67,6 +80,7 @@ function combo (options) {
       res.status(200)
       res.set('Content-Type', content_type)
       res.set('Content-Length', content.length)
+      res.set('Last-Modified', new Date(data.timestamp).toString())
       res.send(content)
       res.end()
     })
@@ -93,6 +107,15 @@ combo.get_content = function (pathname, options, callback) {
       pathname: pathname
     })
   })
+}
+
+
+// Get the second time 
+combo._second_time = function (ahead) {
+  ahead = parseInt(ahead) || 0
+  var time = + new Date - ahead
+
+  return parseInt(time / 1000) * 1000
 }
 
 

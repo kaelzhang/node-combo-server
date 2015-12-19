@@ -23,6 +23,7 @@ var middleware = combo({
 })
 
 app.use(middleware)
+app.set('etag', false)
 app.listen(8888, function () {
   open('http://localhost:8888/combo/mod/a.js,mod/b.js')
 })
