@@ -50,7 +50,7 @@ function combo (options) {
   function middleware (req, res, next) {
     var url = req.url
 
-    if (!~url.indexOf(options.base)) {
+    if (options.base && !~url.indexOf(options.base)) {
       return next()
     }
 
@@ -147,9 +147,13 @@ combo.parse_path = function (url, options) {
   var version = parsed.query.v || ''
   var pathname = parsed.pathname
 
-  var index = pathname.indexOf(options.base)
-  if (~index) {
-    pathname = pathname.slice(index + options.base.length)
+  var base = options.base
+  var index
+  if (base) {
+    index = pathname.indexOf(options.base)
+    if (~index) {
+      pathname = pathname.slice(index + options.base.length)
+    }
   }
 
   var paths = pathname
