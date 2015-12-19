@@ -63,26 +63,49 @@ function combo (options) {
             + combo.remove_leading_slash(err.pathname) + '"')
       }
 
+      // RFC7232
+      // > A recipient MUST ignore If-Modified-Since if the request contains an
+      // > If-None-Match header field; the condition in If-None-Match is
+      // > considered to be a more accurate replacement for the condition in
+      // > If-Modified-Since, and the two are only combined for the sake of
+      // > interoperating with older intermediaries that might not implement
+      // > If-None-Match.
+      if (req.get('If-None-Match')) {
+        return normal_response()
+      }
+
+      var modified_since = + new Date(req.get('If-Modified-Since'))
+      // > A recipient MUST ignore the If-Modified-Since header field if the
+      // > received field-value is not a valid HTTP-date, or if the request
+      // > method is neither GET nor HEAD.
+
+      // NaN
+      if (!modified_since) {
+        return normal_response()
+      }
+
       // 304
       if (cached
-        && data.timestamp <= + new Date(req.get('If-Modified-Since')) ) {
+        && data.timestamp <= modified_since) {
         res.status(304)
         res.end()
         return
       }
 
-      var contents = data.contents
-      var joiner = options.joiner || combo.join_contents
-      var content = joiner(contents, options)
-      var last = contents[contents.length - 1]
-      var content_type = mime.lookup(last.pathname)
+      function normal_response () {
+        var contents = data.contents
+        var joiner = options.joiner || combo.join_contents
+        var content = joiner(contents, options)
+        var last = contents[contents.length - 1]
+        var content_type = mime.lookup(last.pathname)
 
-      res.status(200)
-      res.set('Content-Type', content_type)
-      res.set('Content-Length', content.length)
-      res.set('Last-Modified', new Date(data.timestamp).toString())
-      res.send(content)
-      res.end()
+        res.status(200)
+        res.set('Content-Type', content_type)
+        res.set('Content-Length', content.length)
+        res.set('Last-Modified', new Date(data.timestamp).toString())
+        res.send(content)
+        res.end()
+      }
     })
   }
 
