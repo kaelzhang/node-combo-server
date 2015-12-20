@@ -9,8 +9,17 @@ var fs = require('graceful-fs')
 var unique = require('array-unique')
 var mime = require('mime')
 var request = require('request')
+var set = require('set-options')
 
 var node_url = require('url')
+
+var DEFAULTS = {
+  last_modified_ahead: 60 * 1000,
+  cache_options: {
+    max: 1000,
+    maxAge: 1000 * 60 * 60 * 12
+  }
+}
 
 
 // @param {Object} options
@@ -18,34 +27,32 @@ var node_url = require('url')
 // - base: {String}
 // - joiner: {function()} method to join file contents
 // - routers: {Array.<router>}
-// - expire: {Number}
 // - last_modified_ahead: {Number} see [rfc7323](https://tools.ietf.org/html/rfc7232#page-7)
-// - 
+// - search: {function()}
 function combo (options) {
-  options.last_modified_ahead = options.last_modified_ahead || 60 * 1000
+  options = set(options, DEFAULTS)
+  var ac_options = set(options.cache_options, DEFAULTS.cache_options)
 
-  var ac = new AsyncCache({
-    max: 1000,
-    maxAge: 1000 * 60 * 60 * 12,
-    load: function (url, callback) {
-      var parser = options.path_parser || combo.parse_path
-      var paths = parser(url, options)
+  ac_options.load = function (url, callback) {
+    var parser = options.path_parser || combo.parse_path
+    var paths = parser(url, options)
 
-      async.map(paths, function (path, done) {
-        combo.get_content(path, options, done)
+    async.map(paths, function (path, done) {
+      combo.get_content(path, options, done)
 
-      }, function (err, contents) {
-        if (err) {
-          return callback(err)
-        }
+    }, function (err, contents) {
+      if (err) {
+        return callback(err)
+      }
 
-        callback(null, {
-          contents: contents,
-          timestamp: combo._second_time(options.last_modified_ahead)
-        })
-      });
-    }
-  })
+      callback(null, {
+        contents: contents,
+        timestamp: combo._second_time(options.last_modified_ahead)
+      })
+    })
+  }
+
+  var ac = new AsyncCache(ac_options)
 
   function middleware (req, res, next) {
     var url = req.url
@@ -114,22 +121,38 @@ function combo (options) {
 
 
 combo.get_content = function (pathname, options, callback) {
-  router.route(pathname, {
-    routers: options.routers
-  }, function (filename, fallback_url) {
+  router.route(pathname, options, function (filename, fallback_url) {
     if (filename) {
-      return combo._get_file_content(filename, pathname, callback)
+      return combo._get_file_content(filename, cb)
     }
 
     if (fallback_url) {
-      return combo._get_remote_content(url, pathname, callback)
+      return combo._get_remote_content(url, cb)
     }
 
-    callback({
-      code: 'ROUTE_NOT_FOUND',
-      pathname: pathname
-    })
+    cb('ROUTE_NOT_FOUND')
   })
+
+  function cb (err, data) {
+    if (err) {
+      var code = err;
+      var e = data;
+      var ret = {
+        code: code,
+        pathname: pathname
+      }
+
+      if (e) {
+        ret.err = e
+      }
+      return callback(ret)
+    }
+
+    callback(null, {
+      pathname: pathname,
+      content: data
+    })
+  }
 }
 
 
@@ -142,20 +165,24 @@ combo._second_time = function (ahead) {
 }
 
 
-combo._get_file_content = function (filename, pathname, callback) {
+combo._get_file_content = function (filename, callback) {
   fs.readFile(filename, function (err, content) {
     if (err) {
-      return callback({
-        code: 'ERR_READ_FILE',
-        pathname: pathname,
-        err: err
-      })
+      return callback('ERR_READ_FILE', err)
     }
 
-    callback(null, {
-      pathname: pathname,
-      content: content.toString()
-    })
+    callback(null, content.toString())
+  })
+}
+
+
+combo._get_remote_content = function (url, callback) {
+  request(url, function (err, response, body) {
+    if (err || response.statusCode !== 200) {
+      return callback('FAILS_READ_REMOTE')
+    }
+
+    callback(null, body)
   })
 }
 
