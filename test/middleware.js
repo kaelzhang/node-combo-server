@@ -19,11 +19,12 @@ var middleware = combo({
       root: root('static')
     }
   ],
-  base: '/combo'
+  base: '/combo',
+  by_pass: 'https://ajax.googleapis.com'
 })
 
 app.use(middleware)
 app.set('etag', false)
 app.listen(8888, function () {
-  open('http://localhost:8888/combo/mod/a.js,mod/b.js')
+  open('http://localhost:8888/combo/mod/a.js,mod/b.js,ajax/libs/jquery/2.1.3/jquery.min.js')
 })

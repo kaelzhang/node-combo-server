@@ -127,7 +127,7 @@ combo.get_content = function (pathname, options, callback) {
     }
 
     if (fallback_url) {
-      return combo._get_remote_content(url, cb)
+      return combo._get_remote_content(fallback_url, cb)
     }
 
     cb('ROUTE_NOT_FOUND')
@@ -234,4 +234,3 @@ combo.make_sure_leading_slash = function (path) {
 combo.remove_leading_slash = function (path) {
   return path.replace(/^\/+/, '')
 }
-
