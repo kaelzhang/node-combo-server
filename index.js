@@ -126,6 +126,7 @@ function combo (options) {
     })
   }
 
+  middleware.router = router
   return middleware
 }
 
