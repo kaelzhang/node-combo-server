@@ -15,7 +15,7 @@ $ npm install combo-server --save
 
 ```js
 var config = {
-  routers: [
+  routes: [
     {
       location: '/mod',
       root: '/data/static'
@@ -25,7 +25,15 @@ var config = {
   // Optional
   // If the pathname of the url doesn't start with '/combo/',
   // it will skip and go to the next middleware
-  base: '/combo'
+  base: '/combo',
+
+  // Default root to find static files, can be a path string or array of strings
+  root: [
+    '/data/old-static'
+  ],
+
+  // disable cache
+  cache: false
 }
 
 var app = require('express')()
@@ -45,3 +53,4 @@ It will returns the comboed content of `'/data/static/a.js'` and `'/data/static/
 - **config** `Object`
   - url_parser `function(url, config)`
   - joiner `function(contents)`
+  - cache `false|Object` set to `false` to disable cache, or the [`async-cache`](https://www.npmjs.com/package/async-cache) options

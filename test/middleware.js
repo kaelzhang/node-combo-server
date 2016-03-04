@@ -13,7 +13,7 @@ var express = require('express')
 var app = express()
 
 var middleware = combo({
-  routers: [
+  routes: [
     {
       location: '/mod',
       root: root('static')

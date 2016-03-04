@@ -3,7 +3,7 @@
 module.exports = combo
 
 var AsyncCache = require('async-cache')
-var router = require('neuron-router')
+var nrouter = require('neuron-router')
 var async = require('async')
 var fs = require('graceful-fs')
 var unique = require('array-unique')
@@ -15,7 +15,7 @@ var node_url = require('url')
 
 var DEFAULTS = {
   last_modified_ahead: 60 * 1000,
-  cache_options: {
+  cache: {
     max: 1000,
     maxAge: 1000 * 60 * 60 * 12
   }
@@ -23,22 +23,32 @@ var DEFAULTS = {
 
 
 // @param {Object} options
-// - parser: {function(url)} should returns `paths` {Array.<path>}
+// - path_parser: {function(url)} should returns `paths` {Array.<path>}
 // - base: {String}
 // - joiner: {function()} method to join file contents
-// - routers: {Array.<router>}
+// - routes: {Array.<router>}
 // - last_modified_ahead: {Number} see [rfc7323](https://tools.ietf.org/html/rfc7232#page-7)
 // - search: {function()}
 function combo (options) {
   options = set(options, DEFAULTS)
-  var ac_options = set(options.cache_options, DEFAULTS.cache_options)
+
+  if (options.cache === false) {
+    options.cache = {
+      max: 1000,
+      // set to 1ms
+      maxAge: 1
+    }
+  }
+
+  var ac_options = set(options.cache, DEFAULTS.cache)
+  var router = nrouter(options)
 
   ac_options.load = function (url, callback) {
     var parser = options.path_parser || combo.parse_path
     var paths = parser(url, options)
 
     async.map(paths, function (path, done) {
-      combo.get_content(path, options, done)
+      combo.get_content(router, path, done)
 
     }, function (err, contents) {
       if (err) {
@@ -120,8 +130,8 @@ function combo (options) {
 }
 
 
-combo.get_content = function (pathname, options, callback) {
-  router.route(pathname, options, function (filename, fallback_url) {
+combo.get_content = function (router, pathname, callback) {
+  router.route(pathname, function (filename, fallback_url) {
     if (filename) {
       return combo._get_file_content(filename, cb)
     }
