@@ -30,9 +30,7 @@ var DEFAULTS = {
 // - last_modified_ahead: {Number} see [rfc7323](https://tools.ietf.org/html/rfc7232#page-7)
 // - search: {function()}
 function combo (options) {
-  options = set(options, DEFAULTS)
-
-  if (options.cache === false) {
+  if (options && options.cache === false) {
     options.cache = {
       max: 1000,
       // set to 1ms
@@ -40,6 +38,7 @@ function combo (options) {
     }
   }
 
+  options = set(options, DEFAULTS)
   var ac_options = set(options.cache, DEFAULTS.cache)
   var router = nrouter(options)
 
