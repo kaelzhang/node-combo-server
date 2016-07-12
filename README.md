@@ -21,7 +21,7 @@ var config = {
       root: '/data/static'
     }
   ],
-  
+
   // Optional
   // If the pathname of the url doesn't start with '/combo/',
   // it will skip and go to the next middleware
@@ -51,6 +51,10 @@ http://localhost:8888/combo/mod/a.js,mod/b.js
 It will returns the comboed content of `'/data/static/a.js'` and `'/data/static/b.js'`.
 
 - **config** `Object`
-  - url_parser `function(url, config)`
+  - path_parser `function(url, config)`
   - joiner `function(contents)`
   - cache `false|Object` set to `false` to disable cache, or the [`async-cache`](https://www.npmjs.com/package/async-cache) options
+
+### path_parser
+
+Returns `Array.<pathname>`

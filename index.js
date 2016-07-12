@@ -28,7 +28,6 @@ var DEFAULTS = {
 // - joiner: {function()} method to join file contents
 // - routes: {Array.<router>}
 // - last_modified_ahead: {Number} see [rfc7323](https://tools.ietf.org/html/rfc7232#page-7)
-// - search: {function()}
 function combo (options) {
   if (options && options.cache === false) {
     options.cache = {
@@ -75,7 +74,7 @@ function combo (options) {
       if (err) {
         return res
           .status(404)
-          .end('Failed to read "' 
+          .end('Failed to read "'
             + combo.remove_leading_slash(err.pathname) + '"')
       }
 
@@ -166,7 +165,7 @@ combo.get_content = function (router, pathname, callback) {
 }
 
 
-// Get the second time 
+// Get the second time
 combo._second_time = function (ahead) {
   ahead = parseInt(ahead) || 0
   var time = + new Date - ahead
@@ -198,10 +197,7 @@ combo._get_remote_content = function (url, callback) {
 
 
 // /combo/mod/a.js,mod/b.js
-// -> {
-//   paths: ['/mod/a.js', '/mod/b.js'],
-//   version: ''
-// }
+// -> ['/mod/a.js', '/mod/b.js']
 combo.parse_path = function (url, options) {
   var parsed = node_url.parse(url, true)
   var version = parsed.query.v || ''
@@ -229,7 +225,7 @@ combo.parse_path = function (url, options) {
 combo.join_contents = function (contents) {
   return contents.map(function (content) {
     var pathname = content.pathname
-    return '// ' + combo.remove_leading_slash(pathname) + '\n' 
+    return '// ' + combo.remove_leading_slash(pathname) + '\n'
       + content.content
 
   }).join('\n\n')
