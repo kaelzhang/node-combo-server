@@ -10,6 +10,8 @@ var unique = require('array-unique')
 var mime = require('mime')
 var request = require('request')
 var set = require('set-options')
+var presuf = require('pre-suf')
+var node_path = require('path')
 
 var node_url = require('url')
 
@@ -223,20 +225,35 @@ combo.parse_path = function (url, options) {
 
 
 combo.join_contents = function (contents) {
+  if (!contents.length) {
+    return ''
+  }
+
+  var length = contents.length
+  var is_css = node_path.extname(contents[length - 1].pathname) === '.css'
+
   return contents.map(function (content) {
     var pathname = content.pathname
-    return '// ' + combo.remove_leading_slash(pathname) + '\n'
-      + content.content
+
+    var p = combo.remove_leading_slash(pathname)
+    var prefix = is_css
+      ? '/* '
+        // removes `*/` so that it will not comment codes
+        + p.replace(/\/\*/g, '')
+        + ' */'
+      : '// ' + p
+
+    return prefix + '\n' + content.content
 
   }).join('\n\n')
 }
 
 
 combo.make_sure_leading_slash = function (path) {
-  return path.replace(/^\/*/, '/')
+  return presuf.ensureLeading(path, '/')
 }
 
 
 combo.remove_leading_slash = function (path) {
-  return path.replace(/^\/+/, '')
+  return presuf.removeLeading(path, '/')
 }
