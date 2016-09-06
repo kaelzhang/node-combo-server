@@ -239,7 +239,7 @@ combo.join_contents = function (contents) {
     var prefix = is_css
       ? '/* '
         // removes `*/` so that it will not comment codes
-        + p.replace(/\/\*/g, '')
+        + p.replace(/\*\//g, '')
         + ' */'
       : '// ' + p
 
